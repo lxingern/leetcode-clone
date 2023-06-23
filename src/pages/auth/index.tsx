@@ -1,6 +1,6 @@
 // import { authModalState } from '@/atoms/authModalAtom';
-// import AuthModal from '@/components/Modals/AuthModal';
-import Navbar from '@/components/Navbar';
+import AuthModal from '@/components/Modals/AuthModal';
+import Navbar from '@/components/Navbar/Navbar';
 import React from 'react';
 // import { useRecoilValue } from 'recoil'
 
@@ -17,6 +17,7 @@ const AuthPage:React.FC<AuthPageProps> = () => {
           <img src="/hero.png" alt="hero.img" />
         </div>
         {/* {authModal.isOpen && <AuthModal /> } */}
+        <AuthModal />
       </div>
     </div>
 }
