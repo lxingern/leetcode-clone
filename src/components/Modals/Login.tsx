@@ -1,5 +1,8 @@
 import { authModalState } from '@/atoms/authModalAtom';
-import React from 'react';
+import { auth } from '@/firebase/firebase';
+import { useRouter } from 'next/router';
+import React, { useState, useEffect } from 'react';
+import { useSignInWithEmailAndPassword } from 'react-firebase-hooks/auth';
 import { useSetRecoilState } from 'recoil';
 
 type LoginProps = {
@@ -8,11 +11,43 @@ type LoginProps = {
 
 const Login:React.FC<LoginProps> = () => {
   const setAuthModalState = useSetRecoilState(authModalState)
+  
   const handleClick = (type:'login' | 'register' | 'forgotPassword') => {
     setAuthModalState((prev:any) => ({...prev, type }))
   }
 
-  return <form className="space-y-6 px-6 py-4">
+  const [inputs, setInputs] = useState({ email: '', password: '' })
+  
+  const [
+    signInWithEmailAndPassword,
+    user,
+    loading,
+    error,
+  ] = useSignInWithEmailAndPassword(auth)
+
+  const router = useRouter()
+
+  const handleChangeInput = (e:React.ChangeEvent<HTMLInputElement>) => {
+    setInputs(prev => ({ ...prev, [e.target.name]: e.target.value }))
+  }
+
+  const handleLogin = async (e:React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    if(!inputs.email || !inputs.password) return alert("Please fill in all fields.")
+    try {
+      const user = await signInWithEmailAndPassword(inputs.email, inputs.password)
+      if (!user) return
+      router.push('/')
+    } catch (error:any) {
+      alert(error.message)
+    }
+  }
+
+  useEffect(() => {
+    if(error) alert(error)
+  }, [error])
+
+  return <form className="space-y-6 px-6 py-4" onSubmit={handleLogin}>
     <h3 className="text-xl font-medium text-white">Sign in to LeetClone</h3>
     <div>
       <label htmlFor="email" className="text-sm font-medium block mb-2 text-gray-300">
@@ -23,6 +58,7 @@ const Login:React.FC<LoginProps> = () => {
         bg-gray-600 border-gray-500 placeholder-gray-400 text-white
       " 
         placeholder="name@company.com"
+        onChange={handleChangeInput}
       />
     </div>
     <div>
@@ -34,12 +70,13 @@ const Login:React.FC<LoginProps> = () => {
         bg-gray-600 border-gray-500 placeholder-gray-400 text-white
       " 
         placeholder="********"
+        onChange={handleChangeInput}
       />
     </div>
     <button type="submit" className="w-full text-white focus:ring-blue-300 font-medium rounded-lg
       text-sm px-5 py-2.5 text-center bg-brand-orange hover:bg-brand-orange-s
     ">
-      Login
+      {loading ? "Loading..." : "Login"}
     </button>
     <button className="flex w-full justify-end" onClick={() => handleClick("forgotPassword")}>
       <a href="#" className="text-sm block text-brand-orange hover:underline w-full text-right">
