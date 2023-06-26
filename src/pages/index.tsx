@@ -1,3 +1,4 @@
+import ProblemsTable from "@/components/ProblemsTable/ProblemsTable";
 import Topbar from "@/components/Topbar/Topbar";
 
 export default function Home() {
@@ -32,6 +33,7 @@ export default function Home() {
               </th>
             </tr>
           </thead>
+          <ProblemsTable />
         </table>
       </div>
     </main>
