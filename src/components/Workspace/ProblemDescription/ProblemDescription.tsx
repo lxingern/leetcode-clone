@@ -1,9 +1,10 @@
 import CircleSkeleton from '@/components/Skeletons/CircleSkeleton';
 import RectangleSkeleton from '@/components/Skeletons/RectangleSkeleton';
-import { firestore } from '@/firebase/firebase';
+import { auth, firestore } from '@/firebase/firebase';
 import { DBProblem, Problem } from '@/utils/types/problem';
 import { doc, getDoc } from 'firebase/firestore';
 import React, { useEffect, useState } from 'react';
+import { useAuthState } from 'react-firebase-hooks/auth';
 import { AiFillDislike, AiFillLike } from 'react-icons/ai';
 import { BsCheck2Circle } from 'react-icons/bs';
 import { TiStarOutline } from 'react-icons/ti'
@@ -14,6 +15,7 @@ type ProblemDescriptionProps = {
 
 const ProblemDescription:React.FC<ProblemDescriptionProps> = ({ problem }) => {
   const { currentProblem, loading, problemDifficultyClass } = useGetCurrentProblem(problem.id)
+	const { liked, disliked, solved, starred, setData } = useGetUsersDataOnProblem(problem.id)
 	
 	return (
 		<div className='bg-dark-layer-1'>
@@ -43,7 +45,8 @@ const ProblemDescription:React.FC<ProblemDescriptionProps> = ({ problem }) => {
 								<BsCheck2Circle />
 							</div>
 							<div className='flex items-center cursor-pointer hover:bg-dark-fill-3 space-x-1 rounded p-[3px]  ml-4 text-lg transition-colors duration-200 text-dark-gray-6'>
-								<AiFillLike />
+								{liked && <AiFillLike className='text-dark-blue-s'/>}
+								{!liked && <AiFillLike />}
 								<span className='text-xs'>{currentProblem.likes}</span>
 							</div>
 							<div className='flex items-center cursor-pointer hover:bg-dark-fill-3 space-x-1 rounded p-[3px]  ml-4 text-lg transition-colors duration-200 text-green-s text-dark-gray-6'>
@@ -140,4 +143,33 @@ function useGetCurrentProblem(problemId:string) {
 	}, [problemId])
 
 	return { currentProblem, loading, problemDifficultyClass}
+}
+
+function useGetUsersDataOnProblem(problemId: string) {
+	const [data, setData] = useState({ liked: false, disliked: false, starred: false, solved: false })
+	const [user] = useAuthState(auth)
+
+	useEffect(() => {
+		const getUsersDataOnProblem = async () => {
+			const userRef = doc(firestore, "users", user!.uid)
+			const userSnap = await getDoc(userRef)
+
+			if (userSnap.exists()) {
+				const data = userSnap.data()
+				const { solvedProblems, likedProblems, dislikedProblems, starredProblems} = data
+				setData({
+					liked: likedProblems.includes(problemId),
+					disliked: dislikedProblems.includes(problemId),
+					starred: starredProblems.includes(problemId),
+					solved: solvedProblems.includes(problemId)
+				})
+			}
+		}
+
+		if (user) getUsersDataOnProblem()
+
+		return () => setData({ liked: false, disliked: false, starred: false, solved: false })
+	}, [problemId, user])
+
+	return { ...data, setData }
 }
