@@ -21,7 +21,7 @@ type PlaygroundProps = {
 
 const Playground:React.FC<PlaygroundProps> = ({ problem, setSuccess, setSolved }) => {
   const [activeTestCaseId, setActiveTestCaseId] = useState<number>(0)
-  const [userCode, setUserCode] = useState<string>(problem.starterCode)
+  let [userCode, setUserCode] = useState<string>(problem.starterCode)
   const [user] = useAuthState(auth)
   const { query: { pid } } = useRouter()
 
@@ -32,27 +32,31 @@ const Playground:React.FC<PlaygroundProps> = ({ problem, setSuccess, setSolved }
     }
 
     try {
+      userCode = userCode.slice(userCode.indexOf(problem.starterFunctionName))
       const cb = new Function(`return ${userCode}`)()
-      const success = problems[pid as string].handlerFunction(cb)
-      if (success) {
-        toast.success("Congrats! All test cases passed!", {
-          position: "top-center",
-          autoClose: 3000,
-          theme: "dark"
-        })
-        setSuccess(true)
-        setTimeout(() => {
-          setSuccess(false)
-        }, 4000)
-
-        const userRef = doc(firestore, "users", user.uid)
-        await updateDoc(userRef, {
-          solvedProblems: arrayUnion(pid)
-        })
-        setSolved(true)
+      const handler = problems[pid as string].handlerFunction
+      if (typeof handler === "function") {
+        const success = handler(cb)
+        if (success) {
+          toast.success("Congrats! All test cases passed!", {
+            position: "top-center",
+            autoClose: 3000,
+            theme: "dark"
+          })
+          setSuccess(true)
+          setTimeout(() => {
+            setSuccess(false)
+          }, 4000)
+  
+          const userRef = doc(firestore, "users", user.uid)
+          await updateDoc(userRef, {
+            solvedProblems: arrayUnion(pid)
+          })
+          setSolved(true)
+        }
       }
     } catch (error: any) {
-      if (error.message.startsWith("AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:")) {
+      if (error.message.startsWith("AssertionError [ERR_ASSERTION]:")) {
         toast.error("Oops! One or more test cases failed.", {
           position: "top-center",
           autoClose: 3000,
