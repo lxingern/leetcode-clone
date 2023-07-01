@@ -11,10 +11,11 @@ import { TiStarOutline } from 'react-icons/ti'
 import { toast } from 'react-toastify';
 
 type ProblemDescriptionProps = {
-  problem: Problem
+  problem: Problem,
+	_solved: boolean
 };
 
-const ProblemDescription:React.FC<ProblemDescriptionProps> = ({ problem }) => {
+const ProblemDescription:React.FC<ProblemDescriptionProps> = ({ problem, _solved }) => {
   const { currentProblem, loading, problemDifficultyClass, setCurrentProblem } = useGetCurrentProblem(problem.id)
 	const { liked, disliked, solved, starred, setData } = useGetUsersDataOnProblem(problem.id)
 	const [ user ] = useAuthState(auth)
@@ -165,7 +166,7 @@ const ProblemDescription:React.FC<ProblemDescriptionProps> = ({ problem }) => {
 							>
 								{currentProblem.difficulty}
 							</div>
-							{solved && (
+							{(solved || _solved) && (
 								<div className='rounded p-[3px] ml-4 text-lg transition-colors duration-200 text-green-s text-dark-green-s'>
 								<BsCheck2Circle />
 							</div>
